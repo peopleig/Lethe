@@ -8,12 +8,17 @@
 #define LARGE_THRESHOLD (1ULL*1024*1024)  // 1 mb
 #define ALIGNMENT 16
 #define ALIGN(size) (((size)+(ALIGNMENT-1)) & ~((size_t)(ALIGNMENT-1)))
+#define BLOCK_OVERHEAD (sizeof(block_header_t) + sizeof(block_footer_t))
 
 #define NUM_SIZE_CLASSES 5
 static const size_t SIZE_CLASSES[NUM_SIZE_CLASSES]={16,32, 64,128,256};
 #define TCACHE_MAX_PER_CLASS 64
 // Max from the global pool at once to thread 
 #define TCACHE_REFILL_BATCH  8
+
+/* Simple magic values to sanity-check headers/footers in debug builds. */
+#define LETHE_MAGIC_ALLOC   0xA110CA7EDu
+#define LETHE_MAGIC_FREE    0xF4EEB10Cu
 
 //! Block Structures
 typedef struct block_header{
@@ -41,6 +46,7 @@ extern void* heap_start;
 extern void* heap_end;
 
 //! for freelist.c
+extern pthread_mutex_t global_lock;
 void freelist_insert(free_block_t* block);
 void freelist_remove(free_block_t* block);
 free_block_t* freelist_search(size_t size);
